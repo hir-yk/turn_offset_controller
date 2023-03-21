@@ -9,7 +9,7 @@ from tier4_planning_msgs.msg import LateralOffset
 class TurnOffsetController(Node):
 
     def __init__(self):
-        super().__init__('minimal_subscriber')
+        super().__init__('turn_report_subscriber')
         self.subscription = self.create_subscription(
             TurnIndicatorsReport,
             '/vehicle/status/turn_indicators_status',
@@ -19,17 +19,24 @@ class TurnOffsetController(Node):
 
         self.publisher_ = self.create_publisher(LateralOffset, '/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/input/lateral_offset', 10)
 
+        self.prev_state = 1
+
     def listener_callback(self, msg):
-        self.get_logger().info('I heard: "%d"' % msg.report)
+        self.get_logger().debug('I heard: "%d"' % msg.report)
 
         offset_msg = LateralOffset()
+
+        if msg.report == self.prev_state:
+            return
 
         if msg.report == 1:
             offset_msg.lateral_offset = 0.0
         elif msg.report == 2:
-            offset_msg.lateral_offset = 0.5
+            offset_msg.lateral_offset = 0.4
         elif msg.report == 3:
-            offset_msg.lateral_offset = -0.5
+            offset_msg.lateral_offset = -0.4
+
+        self.prev_state = msg.report
 
         self.publisher_.publish(offset_msg)
         self.get_logger().info('turn_signal_report: "%d"' % msg.report)
