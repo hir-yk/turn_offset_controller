@@ -7,15 +7,17 @@
   <maintainer email="hir-yk@users.noreply.github.com">autoware</maintainer>
   <license>Apache License 2.0</license>
 
-  <depend>autoware_auto_vehicle_msgs</depend>
-  <depend>tier4_planning_msgs</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <test_depend>ament_copyright</test_depend>
-  <test_depend>ament_flake8</test_depend>
-  <test_depend>ament_pep257</test_depend>
-  <test_depend>python3-pytest</test_depend>
+  <build_depend>rclcpp</build_depend>
+  <build_depend>autoware_auto_vehicle_msgs</build_depend>
+  <build_depend>tier4_planning_msgs</build_depend>
+
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>autoware_auto_vehicle_msgs</exec_depend>
+  <exec_depend>tier4_planning_msgs</exec_depend>
 
   <export>
-    <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>
