@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 
-from autoware_auto_vehicle_msgs.msg import TurnIndicatorsReport
+from autoware_auto_vehicle_msgs.msg import TurnIndicatorsReport, SteeringReport
 from tier4_planning_msgs.msg import LateralOffset
 
 class TurnOffsetController(Node):
@@ -16,11 +16,18 @@ class TurnOffsetController(Node):
             self.listener_callback,
             10)
         self.subscription  # prevent unused variable warning
+        
+        self.steering_status_subscription = self.create_subscription(  # ステアリング状態のサブスクリプションを作成
+            SteeringReport,
+            '/vehicle/status/steering_status',
+            self.steering_status_callback,
+            10)        
 
         self.publisher_ = self.create_publisher(LateralOffset, '/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/input/lateral_offset', 10)
 
         self.prev_state = 1
-
+        self.in_intersection = False  # 交差点内であるかを保存する変数
+        
     def listener_callback(self, msg):
         self.get_logger().debug('I heard: "%d"' % msg.report)
 
@@ -29,12 +36,12 @@ class TurnOffsetController(Node):
         if msg.report == self.prev_state:
             return
 
-        if msg.report == 1:
+        if msg.report == 1 or self.in_intersection:  # 交差点にいる場合も横方向オフセットをゼロに設定
             offset_msg.lateral_offset = 0.0
         elif msg.report == 2:
-            offset_msg.lateral_offset = 0.4
+            offset_msg.lateral_offset = 0.3
         elif msg.report == 3:
-            offset_msg.lateral_offset = -0.4
+            offset_msg.lateral_offset = -0.3
 
         self.prev_state = msg.report
 
@@ -42,7 +49,16 @@ class TurnOffsetController(Node):
         self.get_logger().info('turn_signal_report: "%d"' % msg.report)
         self.get_logger().info('publishing_offset: "%f"' % offset_msg.lateral_offset)
 
-
+    def steering_status_callback(self, msg):  # 新しいコールバック関数
+        self.get_logger().debug('Steering tire angle: "%f"' % msg.steering_tire_angle)
+        self.in_intersection = abs(msg.steering_tire_angle) >= 0.00872664  # ステアリング角度が0.5度以上であるかどうか
+        if self.in_intersection:
+            offset_msg = LateralOffset()
+            offset_msg.lateral_offset = 0.0
+            self.publisher_.publish(offset_msg)
+            self.get_logger().info('In intersection, setting offset to 0.0')
+            
+            
 def main(args=None):
     rclpy.init(args=args)
 
