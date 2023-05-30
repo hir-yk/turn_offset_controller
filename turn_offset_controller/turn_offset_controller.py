@@ -49,15 +49,16 @@ class TurnOffsetController(Node):
         self.get_logger().info('turn_signal_report: "%d"' % msg.report)
         self.get_logger().info('publishing_offset: "%f"' % offset_msg.lateral_offset)
 
-    def steering_status_callback(self, msg):  # 新しいコールバック関数
+    def steering_status_callback(self, msg):
         self.get_logger().debug('Steering tire angle: "%f"' % msg.steering_tire_angle)
-        self.in_intersection = abs(msg.steering_tire_angle) >= 0.00872664  # ステアリング角度が0.5度以上であるかどうか
-        if self.in_intersection:
-            offset_msg = LateralOffset()
-            offset_msg.lateral_offset = 0.0
-            self.publisher_.publish(offset_msg)
-            self.get_logger().info('In intersection, setting offset to 0.0')
-            
+        self.new_intersection_status = abs(msg.steering_tire_angle) >= 0.04  # ステアリング角度が2.0度以上であるかどうか
+        if( self.new_intersection_status != self.in_intersection ):
+            self.in_intersection = self.new_intersection_status
+            if self.in_intersection:
+                offset_msg = LateralOffset()
+                offset_msg.lateral_offset = 0.0
+                self.publisher_.publish(offset_msg)
+                self.get_logger().info('In intersection, setting offset to 0.0')
             
 def main(args=None):
     rclpy.init(args=args)
