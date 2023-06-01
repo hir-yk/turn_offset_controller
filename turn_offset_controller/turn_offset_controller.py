@@ -3,7 +3,7 @@
 import rclpy
 from rclpy.node import Node
 
-from autoware_auto_vehicle_msgs.msg import TurnIndicatorsReport, SteeringReport
+from autoware_auto_vehicle_msgs.msg import TurnIndicatorsCommand, SteeringReport
 from tier4_planning_msgs.msg import LateralOffset
 
 class TurnOffsetController(Node):
@@ -11,8 +11,8 @@ class TurnOffsetController(Node):
     def __init__(self):
         super().__init__('turn_report_subscriber')
         self.subscription = self.create_subscription(
-            TurnIndicatorsReport,
-            '/vehicle/status/turn_indicators_status',
+            TurnIndicatorsCommand,
+            '/control/command/turn_indicators_cmd',
             self.listener_callback,
             10)
         self.subscription  # prevent unused variable warning
@@ -29,24 +29,25 @@ class TurnOffsetController(Node):
         self.in_intersection = False  # 交差点内であるかを保存する変数
         
     def listener_callback(self, msg):
-        self.get_logger().debug('I heard: "%d"' % msg.report)
+        self.get_logger().debug('I heard: "%d"' % msg.command)
 
         offset_msg = LateralOffset()
 
-        if msg.report == self.prev_state:
-            return
+        if msg.command == self.prev_state:
+            pass
+            #return
 
-        if msg.report == 1 or self.in_intersection:  # 交差点にいる場合も横方向オフセットをゼロに設定
+        if msg.command == 0 or self.in_intersection:  # 交差点にいる場合も横方向オフセットをゼロに設定
             offset_msg.lateral_offset = 0.0
-        elif msg.report == 2:
+        elif msg.command == 2:
             offset_msg.lateral_offset = 0.3
-        elif msg.report == 3:
+        elif msg.command == 3:
             offset_msg.lateral_offset = -0.3
 
-        self.prev_state = msg.report
+        self.prev_state = msg.command
 
         self.publisher_.publish(offset_msg)
-        self.get_logger().info('turn_signal_report: "%d"' % msg.report)
+        self.get_logger().info('turn_signal_cmd: "%d"' % msg.command)
         self.get_logger().info('publishing_offset: "%f"' % offset_msg.lateral_offset)
 
     def steering_status_callback(self, msg):
