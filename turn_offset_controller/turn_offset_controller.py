@@ -34,8 +34,8 @@ class TurnOffsetController(Node):
         offset_msg = LateralOffset()
 
         if msg.command == self.prev_state:
-            pass
-            #return
+            #pass
+            return
 
         if msg.command == 0 or self.in_intersection:  # 交差点にいる場合も横方向オフセットをゼロに設定
             offset_msg.lateral_offset = 0.0
@@ -60,6 +60,7 @@ class TurnOffsetController(Node):
                 offset_msg.lateral_offset = 0.0
                 self.publisher_.publish(offset_msg)
                 self.get_logger().info('In intersection, setting offset to 0.0')
+                self.prev_state = 1
             
 def main(args=None):
     rclpy.init(args=args)
